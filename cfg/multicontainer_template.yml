@@ -1,0 +1,98 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: job0
+
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+
+        - name: c0
+          image: gitlab-registry.nrp-nautilus.io/martinezci/cuda11.7base-ubuntu20.04:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+            requests:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+          env:
+            - name: CONTAINER_ID
+              value: cont0
+            - name: JOB_ID
+              value: job0
+          command: ["python3","test_script.py"]
+
+        - name: c1
+          image: gitlab-registry.nrp-nautilus.io/martinezci/cuda11.7base-ubuntu20.04:latest        
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+            requests:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+          env:
+            - name: CONTAINER_ID
+              value: cont1
+            - name: JOB_ID
+              value: job0  
+          command: ["python3","test_script.py"]
+
+        - name: c2
+          image: gitlab-registry.nrp-nautilus.io/martinezci/cuda11.7base-ubuntu20.04:latest        
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+            requests:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+          env:
+            - name: CONTAINER_ID
+              value: cont2
+            - name: JOB_ID
+              value: job0      
+          command: ["python3","test_script.py"]
+
+        - name: c3
+          image: gitlab-registry.nrp-nautilus.io/martinezci/cuda11.7base-ubuntu20.04:latest        
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+            requests:
+              memory: 8Gi
+              cpu: 2
+              nvidia.com/gpu: 1
+          env:
+            - name: CONTAINER_ID
+              value: cont3
+            - name:JOB_ID
+              value: job0
+          command: ["python3","test_script.py"]
+
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nvidia.com/gpu.product
+                    operator: In
+                    values:
+                      - NVIDIA-GeForce-RTX-3090
