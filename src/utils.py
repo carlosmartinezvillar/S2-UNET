@@ -46,25 +46,25 @@ Class ConfusionMatrix():
 	network (predicted values of a class), and values of 1 or true in T are pixels belonging to that
 	belonging to that class. The confusion matrix is set as:
 
-		      predicted
-		        1   0
-	         +----+----+
-	      1  | TP | FN |
-  	label    +----+----+
-	      0  | FP | TN |
-		     +----+----+
+		       predicted
+		         1   0
+	          +----+----+
+	       1  | TP | FN |
+  	actual    +----+----+
+	       0  | FP | TN |
+		      +----+----+
 
-	For the case of 3 classes, the confusion matrix is set as
+	For the case of 3 classes, the confusion matrix is set 
 
-	             predicted
-		        0    1    2
-	         +----+----+----+
-	      0  | TP | FN | FN |
-  	         +----+----+----+
-	label 1  | FP | TP | FN |
-		     +----+----+----+
-          2  | FP | FP | TP |
-             +----+----+----+
+	              predicted
+		         0    1    2
+	          +----+----+----+
+	       0  | TP | FN | FN |
+  	          +----+----+----+
+	actual 1  | FP | TN | TN |
+		      +----+----+----+
+           2  | FP | TN | TN |
+              +----+----+----+
 	'''
 	def __init__(self,n_classes=2,method='bool'):
 		self.n_classes = n_classes
@@ -101,8 +101,27 @@ Class ConfusionMatrix():
 			self.TN += tnm.sum()
 
 		if self.n_classes == 3:
-			#TODO
-			pass
+			self.M[0,0] += ((T==0) & (Y==0)).sum()
+			self.M[0,1] += ((T==0) & (Y==1)).sum() 
+			self.M[0,2] += ((T==0) & (Y==2)).sum() 
+			self.M[1,0] += ((T==1) & (Y==0)).sum()
+			self.M[1,1] += ((T==1) & (Y==1)).sum()
+			self.M[1,2] += ((T==1) & (Y==2)).sum()
+			self.M[2,0] += ((T==2) & (Y==0)).sum()
+			self.M[2,0] += ((T==1) & (Y==1)).sum()
+			self.M[2,2] += ((T==2) & (Y==2)).sum()
+		
+			#alternatively
+			# t = T.flatten()
+			# y = Y.flatten()
+			# for i,j in zip(t,y):
+				# self.M[i,j] += 1
+
+			# 1x3 arrays with each
+			self.TP = self.M.diagonal()
+			self.FP = self.M.sum(axis=0) - self.TP
+			self.FN = self.M.sum(axis=1) - self.TP
+			self.TN = self.M.sum() - self.TP - self.FP - self.FN
 
 	def append(Y,T):
 		if self.y_batches is None:
@@ -176,38 +195,32 @@ def save_parameters():
 if __name__ == "__main__":
 
 	#a small function check
-	y0 = [
+	y0 = np.array([
 		[0,0,0,0,0],
 		[0,0,1,1,1],
 		[0,0,1,1,1],
 		[0,0,0,0,0],
-		[0,0,0,0,0]]
-	y0 = np.array(y0)
+		[0,0,0,0,0]])
 
-	y1 = [
-		[0,0,0,0,1],
+	t0 = np.array([
+		[0,0,0,0,0],
+		[0,0,0,0,0],
+		[0,1,1,0,0],
+		[0,1,1,0,0],
+		[0,0,0,0,0]])
+
+	#another check for 3-way classification
+	#from array [B,C,x,y] after argmax axis=1, [B,x,y]
+	y0 = np.array([
+		[0,0,0,2,2],
+		[0,1,2,2,2],
+		[0,0,1,2,0],
 		[0,0,0,1,0],
-		[0,0,1,0,0],
-		[0,0,0,0,0],
-		[0,0,0,0,0]]
-	y1 = np.array(y1)
-
-	Y = np.stack((y0,y1),axis=0)
-
-	t0 = [
-		[0,0,0,0,0],
-		[0,0,0,0,0],
-		[0,1,1,0,0],
-		[0,1,1,0,0],
-		[0,0,0,0,0]]
-	t0 = np.array(t0)
-
-	t1 = [
-		[0,1,1,1,1],
-		[0,0,1,1,1],
+		[0,0,0,0,0]])
+		
+	t0 = np.array([
+		[0,1,2,2,2],
+		[0,1,2,2,2],
+		[0,0,1,2,2],
 		[0,0,0,1,1],
-		[0,0,0,0,1],
-		[0,0,0,0,0]]
-	t1 = np.array(t1)
-
-	T = np.stack((t0,t1),axis=0)
+		[0,0,0,0,0]])

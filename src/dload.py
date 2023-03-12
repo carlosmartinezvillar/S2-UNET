@@ -1,10 +1,12 @@
-import numpy as np
-import torch
-# import torch.nn.functional as F #if pad collate is needed
 import os
 import time
 import sys
+import numpy as np
+import torch
+# import torch.nn.functional as F #if pad collate is needed
 # import multiprocessing
+import torchvision as tv
+from pillow import Image
 
 import utils
 
@@ -27,8 +29,8 @@ class SentinelDataset(torch.utils.data.Dataset):
 
 	def __getitem__(self,idx):
 		#do something important here...
-		img = torchvision.io.read_image(self.images[idx],mode=torchvision.io.ImageReadMode.UNCHANGED)
-		lbl = torchvision.io.read_image(self.labels[idx],mode=torchvision.io.ImageReadMode.UNCHANGED)
+		img = tv.io.read_image(self.images[idx],mode=tv.io.ImageReadMode.UNCHANGED)
+		lbl = tv.io.read_image(self.labels[idx],mode=tv.io.ImageReadMode.UNCHANGED)
 		return (img,lbl)
 
 	def flip(self):
@@ -39,6 +41,12 @@ class SentinelDataset(torch.utils.data.Dataset):
 ################################################################################
 # FUNCTIONS
 ################################################################################
+def train_validation_split():
+	'''
+	returns training_set, validation_set
+	'''
+	pass
+
 def train_test_split():
-	# return tr_set, va_set, te_set
+	# returns tr_set, va_set, test_set
 	pass
