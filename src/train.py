@@ -32,7 +32,7 @@ def train(model,loss_fn,optimizer,dataloader,device=0):
 	model.train()
 	sum_loss   = 0
 
-	for batch_id, (X,T) in enumerate(dataloader):
+	for batch_id, (X,T) in enumerate(train_loader):
 		#Batch to gpu
 		X,T = X.to(device,non_blocking=True),T.to(device,non_blocking=True)
 
@@ -56,10 +56,32 @@ def train(model,loss_fn,optimizer,dataloader,device=0):
 def validate(model,loss_fn,optimizer,dataloader,device=0):
 	model.eval()
 	sum_loss = 0
-	#TO DO
+
+	for batch_id, (X,T) in enumerate(valid_loader):
+		#Batch to GPU
+		X, T = X.to(device,non_blocking=True), T.to(device,non_blockin=True)
+
+		#Fwd pass
+
+
+		
+		#Update conf. matrix counts
+
+	#log write to file
+
+	#loss
+	#prec recall iou
+
+	#check for best model
+
+
+
 
 
 def train_and_validate(model, tr_dloader, va_dloader, optimizer, loss_fn):
+
+	for epoch in range epochs:
+		
 	#TO DO
 
 

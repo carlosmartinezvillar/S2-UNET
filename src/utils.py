@@ -40,12 +40,11 @@ CFG_DIR = "../cfg/"
 
 ####################################################################################################
 class ConfusionMatrix():
-
 	'''
 	Y and T are taken to be two arrays, each of matching NxM dimensions, corresponding to the       
 	predicted values and the true labels in a class. Values of 1 or true in Y are the outputs of the
-	network (predicted values of a class), and values of 1 or true in T are pixels belonging to that
-	belonging to that class. The confusion matrix is set as:
+	network (predicted class), and values of 1 or true in T are pixels belonging to that class. The 
+	confusion matrix of the 2 class problem is set as:
 
 	           predicted
 	             1   0
@@ -55,10 +54,12 @@ class ConfusionMatrix():
 	       0  | FP | TN |
 	          +----+----+
 
-	For the case of 3 classes, the confusion matrix is set 
+	For the case of 3 classes, a single confusion matrix is analagously set so that it includes all 
+	three classes in one matrix. The diagonal always corresponds to the true positives of a class      
+	but FNs, FPs, and TNs vary. For example, for class 0 the resulting confusion matrix is 
 
-	          predicted
-	         0    1    2
+	             predicted
+	            0    1    2
 	          +----+----+----+
 	       0  | TP | FN | FN |
 	          +----+----+----+
@@ -68,7 +69,7 @@ class ConfusionMatrix():
 	          +----+----+----+
 	'''
 
-	def __init__(self, n_classes=2, method='bool'):
+	def __init__(self, n_classes=2):
 		self.n_classes = n_classes
 		self.M         = np.zeros((n_classes,n_classes))
 		self.TP        = 0
@@ -81,28 +82,38 @@ class ConfusionMatrix():
 	def update(self,Y,T):
 		#for 2 classes, array of indices and mask are the same.
 		if self.n_classes == 2:
-			if method == 'bool':
-				#using bool
-				tpm   = (Y==1) & (T==1)
-				fpm   = tpm ^ (Y==1)
-				fnm   = tpm ^ (T==1)
-				tnm   = ~(tpm | fpm | fnm)
-				# tnm = ~((Y==1) | (T==1))
-				# tnm = ~(Y==1) & ~(T==1)
+			#one way
+			# tp_mask = (Y==1) & (T==1)
+			# fp_mask = tp_mask ^ (Y==1)
+			# fn_mask = tp_mask ^ (T==1)
+			# tn_mask = ~(tp_mask | fp_mask | fn_mask)
+			#another way...
+			# tnm = ~((Y==1) | (T==1))
+			# tn_mask = (Y==0) & (T==0)
+			# tnm = ~(Y==1) & ~(T==1)
+			# self.TP += tp_mask.sum()
+			# self.FP += fp_mask.sum()
+			# self.FN += fn_mask.sum()
+			# self.TN += tn_mask.sum()
+			#yet another way...
+			# self.M[0,0] += ((T==0) & (Y==0)).sum()
+			# self.M[0,1] += ((T==0) & (Y==1)).sum()
+			# self.M[1,0] += ((T==1) & (Y==0)).sum()			
+			# self.M[1,1] += ((T==1) & (Y==1)).sum()
+			# self.TP = self.M[0,0]
+			# self.FN = self.M[0,1]
+			# self.FP = self.M[1,0]
+			# self.TN = self.M[1,1]
+			self.TP += ((T==1) & (Y==1)).sum()
+			self.FN += ((T==1) & (Y==0)).sum()
+			self.FP += ((T==0) & (Y==1)).sum()			
+			self.TN += ((T==0) & (Y==0)).sum()
 
-			if method == 'int':
-				#using ints
-				tp = Y & T
-				fp = Y - tp
-				fn = T - tp
-				tn = 1 - (Y | T)
-
-			self.TP += tpm.sum()
-			self.FP += fpm.sum()
-			self.FN += fnm.sum()
-			self.TN += tnm.sum()
+			print(self.TP,self.FN)
+			print(self.FP,self.TN)
 
 		if self.n_classes == 3:
+			# intersections and such -- coulda been modulo loop
 			self.M[0,0] += ((T==0) & (Y==0)).sum()
 			self.M[0,1] += ((T==0) & (Y==1)).sum() 
 			self.M[0,2] += ((T==0) & (Y==2)).sum() 
@@ -113,13 +124,12 @@ class ConfusionMatrix():
 			self.M[2,0] += ((T==2) & (Y==1)).sum()
 			self.M[2,2] += ((T==2) & (Y==2)).sum()
 		
-			#alternatively
 			# t = T.flatten()
 			# y = Y.flatten()
 			# for i,j in zip(t,y):
 				# self.M[i,j] += 1
 
-			# 1x3 arrays with each
+			# 1x3 arrays with counts for each class
 			self.TP = self.M.diagonal()
 			self.FP = self.M.sum(axis=0) - self.TP
 			self.FN = self.M.sum(axis=1) - self.TP
@@ -134,19 +144,27 @@ class ConfusionMatrix():
 			self.y_batches = np.stack((self.y_batches,Y),axis=0)
 			self.t_batches = np.stack((self.t_batches,T),axis=0)
 
-	def precision(self):
+	def ppv(self):
+		# Precision -- predictive positive rate
 		return self.TP/(self.TP + self.FP)
 
-	def recall(self):
+	def tpr(self):
+		# Recall, sensitivity -- true positive rate
 		return self.TP/(self.TP + self.FN)
 
-	def accuracy(self):
+	def acc(self):
+		# Accuracy -- hit+correct rejections
 		return (self.TP+self.TN)/(self.TP+self.FN+self.FP+self.TN)
 
-	def IoU(self,reverse=False):
-		if reverse:
+	def iou(self,reverse=False):
+		# Intersection over union, jaccard index, critical success index, whatever...
+		if self.n_classes==2 and reverse:
+			# land iou--maybe useful for 2-class
 			return self.TN/(self.TN+self.FN+self.FP)
 		return self.TP / (self.TP+self.FN+self.FP)
+
+	def get_metrics(self):
+		return 
 
 ####################################################################################################
 def IoU(Y,T,n_classes=2):
@@ -211,6 +229,10 @@ if __name__ == "__main__":
 		[0,1,1,0,0],
 		[0,1,1,0,0],
 		[0,0,0,0,0]])
+	cm2 = ConfusionMatrix(n_classes=2)
+
+	# for i in range(1000):
+	cm2.update(y0,t0)
 
 	#another check for 3-way classification
 	#from array [B,C,x,y] after argmax axis=1, [B,x,y]
@@ -227,5 +249,7 @@ if __name__ == "__main__":
 		[0,0,1,2,2],
 		[0,0,0,1,1],
 		[0,0,0,0,0]]])
-cm = ConfusionMatrix(n_classes=3,method='bool')
-cm.update(y0,t0)
+
+	cm3 = ConfusionMatrix(n_classes=3)
+	# for i in range(1000):
+		# cm3.update(y0,t0)

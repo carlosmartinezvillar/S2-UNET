@@ -19,24 +19,40 @@ DATA_DIR = "../dat/"
 ################################################################################
 # CLASSES
 ################################################################################
-class SentinelDataset(torch.utils.data.Dataset):
-	def __init__(self,image_list):
+class SentinelDatasetTorchvision(torch.utils.data.Dataset):
+	def __init__(self,image_list,get_func='PIL'):
+		self.BATCH_SIZE = 16
+		self.CHANNELS   = 3
 		self.images = image_list[:,0]
 		self.labels = image_list[:,1]
+
+		assert get_func is not None, "Image opening function get_func is undefined."
+		if get_func == 'PIL':
+			self.get_func = self.pillow_open()
+		if get_func == 'torchvision':
+			self.get_func = self.torch_open()
 
 	def __len___(self):
 		return len(self.images)
 
 	def __getitem__(self,idx):
-		#do something important here...
-		img = tv.io.read_image(self.images[idx],mode=tv.io.ImageReadMode.UNCHANGED)
-		lbl = tv.io.read_image(self.labels[idx],mode=tv.io.ImageReadMode.UNCHANGED)
+		#do something important here...)
+		x = torch.zeros((self.BATCH_SIZE,self.CHANNELS,512,512))
+		t = torch.zeros((self.BATCH_SIZE,self.CHANNELS,512,512))
+		x,t = get_func(idx)
 		return (img,lbl)
 
 	def flip(self):
-		#in case we would like to flip/transform the image on-the-fly rather than store it...
+		#flip/transform here?
 		pass
 
+	def torch_open(self,idx):
+		img = tv.io.read_image(self.images[idx,path],mode=tv.io.ImageReadMode=GRAY)
+		lbl = tv.io.read_image(self.labels[idx,path],mode=tv.io.ImageReadMode=GRAY)
+		return (img, lbl)
+
+	def pillow_open(self,idx):
+		pass
 
 ################################################################################
 # FUNCTIONS
